@@ -1,0 +1,1 @@
+from .fundamentus import FundamentusModel
