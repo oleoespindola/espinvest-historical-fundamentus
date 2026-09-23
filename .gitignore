@@ -11,8 +11,5 @@
 __pycache__
 .pytest_cache
 
-# Temp
-temp/*
-
 # logs
 log/*

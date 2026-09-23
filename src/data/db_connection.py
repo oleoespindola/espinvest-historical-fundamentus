@@ -3,13 +3,13 @@ from typing import Any, Generator, Hashable
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import URL, Table, create_engine
+from sqlalchemy import URL, Table, create_engine, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError, TimeoutError
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..core import get_settings, logger
-from ..models import FundamentusModel
+from ..models import FundamentusModel, TickerModel
 
 settings = get_settings()
 
@@ -69,10 +69,22 @@ class DbConnectException(Exception):
 
 class DbConnect:
 
+    def get_tickers(self):
+        logger.info("Obtendo tickers/papéis")
+        try:
+            with get_connection() as conn:
+                return conn.scalars(select(TickerModel)).all()
+
+        except Exception as exc:
+            message: str = "Erro ao buscar tickers/papéis"
+
+            logger.critical(message, exc_info=True)
+            raise DbConnectException(message) from exc
+
     def upsert(
         self,
         df: pd.DataFrame,
-        model: type[FundamentusModel],
+        model: type[FundamentusModel] | type[TickerModel],
     ) -> None:
         logger.info(
             f"Inserindo informações no banco de dados; tabela {model.__tablename__}"
@@ -97,7 +109,7 @@ class DbConnect:
             }
 
             statement = statement.on_conflict_do_update(
-                index_elements=[table.c.id, table.c.ticker_id],
+                index_elements=[table.c.ticker_id],
                 set_=update_columns,
             )
 
@@ -105,7 +117,7 @@ class DbConnect:
                 conn.execute(statement)
 
         except Exception as exc:
-            message: str = "Erro a inserir/atualizar informações no banco de dados"
+            message: str = "Erro ao inserir/atualizar informações no banco de dados"
 
             logger.critical(message, exc_info=True)
             raise DbConnectException(message) from exc

@@ -8,8 +8,7 @@ class FundamentusModel(Base):
     __tablename__ = "fundamentus"
     __table_args__ = {"schema": "tickers"}
 
-    id = Column(type_=Integer, primary_key=True)
-    ticker_id = Column(type_=String, unique=True, index=True)
+    ticker_id = Column(type_=String, primary_key=True)
     price = Column(type_=Double)
     pe_ratio = Column(type_=Double)
     pb_ratio = Column(type_=Double)
